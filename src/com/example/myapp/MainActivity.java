@@ -13,6 +13,7 @@ import android.os.Build;
 
 public class MainActivity extends ActionBarActivity {
 
+	//main activity that runs the app
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
