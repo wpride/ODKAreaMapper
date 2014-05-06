@@ -1442,6 +1442,7 @@ containing a value of this type.
          */
         public static final int abc_shareactionprovider_share_with_application=0x7f070026;
         public static final int action_settings=0x7f07002a;
+        public static final int api_key=0x7f07002c;
         public static final int app_name=0x7f070028;
         /**   Title for notification shown when GooglePlayServices needs to be
         enabled for a application to work. [CHAR LIMIT=70] 
@@ -1537,6 +1538,7 @@ containing a value of this type.
         /**  Long form sign-in button text [CHAR LIMIT=30] 
          */
         public static final int common_signin_button_text_long=0x7f070013;
+        public static final int done_button_text=0x7f07002b;
         public static final int hello_world=0x7f070029;
         /**  Location client code resources (prefix with location_client) 
          */
