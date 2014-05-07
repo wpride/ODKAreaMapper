@@ -34,13 +34,20 @@
  	<RelativeLayout
     android:layout_width="fill_parent"
     android:layout_height="wrap_content">
-
+    <TextView
+        android:id="@+id/label_lat_lng"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:text="LatLng"
+        android:textSize="20sp" />
+    
  	<Button
  	    android:id="@+id/submit_button"
 	    android:layout_width="100dp"
 	    android:layout_height="50dp"
 	    android:text="@string/done_button_text"
- 	    android:onClick="doCalculations"
  	    />
  	
  	    <Button
@@ -49,7 +56,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/submit_button"
         android:layout_centerHorizontal="true"
-        android:onClick="getLocation"
         android:layout_marginTop="10dp"
         android:text="Get Location" />
  	</RelativeLayout>
