@@ -303,7 +303,7 @@ int id action_context_bar 0x7f060020
 int id action_menu_divider 0x7f060019
 int id action_menu_presenter 0x7f06001a
 int id action_mode_close_button 0x7f060027
-int id action_settings 0x7f060041
+int id action_settings 0x7f060042
 int id activity_chooser_view_content 0x7f060028
 int id always 0x7f06000f
 int id beginning 0x7f060014
@@ -317,6 +317,7 @@ int id edit_query 0x7f060033
 int id end 0x7f060016
 int id expand_activities_button 0x7f060029
 int id expanded_menu 0x7f06002f
+int id get_location_button 0x7f060041
 int id home 0x7f060017
 int id homeAsUp 0x7f060009
 int id hybrid 0x7f060004

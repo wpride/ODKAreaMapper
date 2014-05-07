@@ -2,6 +2,7 @@ package com.example.myapp;
 
 //import com.example.mapdemo.R;
 import android.content.IntentSender;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -33,6 +34,7 @@ public class MainActivity extends FragmentActivity
 	private LatLng firstClick;
 	private LatLng lastClick;
 	private LocationClient mLocationClient;
+	private Location mCurrentLocation; 
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +49,7 @@ public class MainActivity extends FragmentActivity
     	Button doneButton = (Button) findViewById(R.id.submit_button);
     	doneButton.setOnClickListener(this);
     	
-//        mLocationClient = new LocationClient(this, this, this);
+        mLocationClient = new LocationClient(this, this, this);
 	}
 
     /*
@@ -57,7 +59,7 @@ public class MainActivity extends FragmentActivity
     protected void onStart() {
         super.onStart();
         // Connect the client.
-//        mLocationClient.connect();
+        mLocationClient.connect();
     }
 
     /*
@@ -66,7 +68,7 @@ public class MainActivity extends FragmentActivity
     @Override
     protected void onStop() {
         // Disconnecting the client invalidates it.
-//        mLocationClient.disconnect();
+        mLocationClient.disconnect();
         super.onStop();
     }
 	
@@ -115,7 +117,7 @@ public class MainActivity extends FragmentActivity
     public void onConnected(Bundle dataBundle) {
         // Display the connection status
         Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
-
+        getLocation();
     }
 
     /*
@@ -176,6 +178,25 @@ public class MainActivity extends FragmentActivity
 		return true;
     }
 	
+    /**
+     * Invoked by the "Get Location" button.
+     *
+     * Calls getLastLocation() to get the current location
+     *
+     * @param v The view object associated with this method, in this case a Button.
+     */
+    public void getLocation() {
+
+        // If Google Play Services is available
+        if (servicesConnected()) {
+
+            // Get the current location
+            mCurrentLocation = mLocationClient.getLastLocation();
+            System.out.println("current location");
+            System.out.println(mCurrentLocation.toString());
+        }
+    }
+	
 	
 	/**
 	 * calculates the distance between two points using the haversine formula
@@ -202,7 +223,10 @@ public class MainActivity extends FragmentActivity
 //		
 //	}
 
-
+public void findArea()
+{
+	//http://forum.worldwindcentral.com/showthread.php?20724-A-method-to-compute-the-area-of-a-spherical-polygon
+}
 
 
 }
