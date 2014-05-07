@@ -1,1 +1,3 @@
 res/values/
+bin/*
+gen/*
