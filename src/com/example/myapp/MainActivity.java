@@ -139,7 +139,7 @@ public class MainActivity extends FragmentActivity
     						firstClick,
     						lastClick);
     				mMap.addPolyline(line);
-    				Toast.makeText(v.getContext(), String.valueOf(findDistance(firstClick, lastClick)), Toast.LENGTH_SHORT).show();
+    				Toast.makeText(v.getContext(), String.valueOf(Utilities.findDistance(firstClick, lastClick)), Toast.LENGTH_SHORT).show();
         			setModeToIdle();
     			}
        			else
@@ -179,8 +179,8 @@ public class MainActivity extends FragmentActivity
             	for(int i = 0; i < userPoints.size()-2; i++)
             	{
     	    		PolylineOptions line = new PolylineOptions().add(
-    						toLatLng(userPoints.get(i)),
-    						toLatLng(userPoints.get(i+1))
+    						Utilities.toLatLng(userPoints.get(i)),
+    						Utilities.toLatLng(userPoints.get(i+1))
     						);
     	    		mMap.addPolyline(line);
             	}
@@ -364,8 +364,8 @@ public class MainActivity extends FragmentActivity
 	    	if(currentLocation != null)
 	    	{
 	    		PolylineOptions line = new PolylineOptions().add(
-						toLatLng(location),
-						toLatLng(currentLocation));
+						Utilities.toLatLng(location),
+						Utilities.toLatLng(currentLocation));
 	    		mMap.addPolyline(line);
 	    	}
 	    	else
@@ -386,13 +386,7 @@ public class MainActivity extends FragmentActivity
     	}
     }
     
-    /**
-     * converts Location in to LatLng out
-     */
-    public LatLng toLatLng(Location location)
-    {
-    	return new LatLng(location.getLatitude(), location.getLongitude());
-    }
+   
     
     /**
      * gets current location if the service is available
@@ -419,19 +413,7 @@ public class MainActivity extends FragmentActivity
     }
 	
 	
-	/**
-	 * calculates the distance between two LatLng points using the haversine formula
-	 */
-	private double findDistance(LatLng firstPoint, LatLng secondPoint)
-	{
-		final double radiusOfEarth = 6378;
-		double firstLatitude = firstPoint.latitude;
-		double firstLongitude = firstPoint.longitude;
-		double secondLatitude = secondPoint.latitude;
-		double secondLongitude = secondPoint.longitude;
-		
-		return haversine(firstLatitude, firstLongitude, secondLatitude, secondLongitude, radiusOfEarth);
-	}
+
 	
 	/**
 	 * calculates the distance between two Locations using the haversine formula
@@ -443,41 +425,6 @@ public class MainActivity extends FragmentActivity
 		double firstLongitude = firstPoint.getLongitude();
 		double secondLatitude = secondPoint.getLatitude();
 		double secondLongitude = secondPoint.getLongitude();
-		return haversine(firstLatitude, firstLongitude, secondLatitude, secondLongitude, radiusOfEarth);
+		return Utilities.haversine(firstLatitude, firstLongitude, secondLatitude, secondLongitude, radiusOfEarth);
 	} 
-	
-	/**
-	 * Uses the haversine formula to determine what the spherical distance between two points are
-	 * @param firstLat
-	 * @param firstLong
-	 * @param secondLat
-	 * @param secondLong
-	 * @param r
-	 * @return spherical distance in kilometres
-	 */
-	public double haversine(double firstLat, double firstLong, double secondLat, double secondLong, double r)
-	{
-		double latitudeDistance = inRadians(firstLat - secondLat);
-		double longitudeDistance = inRadians(firstLong - secondLong);
-		double a = Math.pow((Math.sin(latitudeDistance / 2)) , 2) 
-				+ Math.cos(inRadians(firstLat)) * Math.cos(inRadians(secondLat))
-				  * Math.pow((Math.sin(longitudeDistance / 2)) , 2);
-		return 2 * r * Math.atan2(Math.pow(a, 0.5), Math.pow(1 - a, 0.5));
-	}
-	
-	/**
-	 * converts degrees to radians
-	 */
-	private double inRadians(Double degree)
-	{
-		return degree * Math.PI / 180.0;
-	}
-
-	//TODO finish this implementation
-	public void findArea()
-	{
-		//http://forum.worldwindcentral.com/showthread.php?20724-A-method-to-compute-the-area-of-a-spherical-polygon
-	}
-
-
 }
