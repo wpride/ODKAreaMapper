@@ -1,7 +1,6 @@
 package com.example.myapp;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 import android.content.IntentSender;
 import android.location.Location;
@@ -36,10 +35,9 @@ public class MainActivity extends FragmentActivity
 	private GoogleMap mMap;
 	
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-	private LatLng firstClick;
-	private LatLng lastClick;
+    	
 	private LocationClient mLocationClient;
-	private Location currentLocation; 
+	
 	private LocationRequest mLocationRequest;
 	
 	
@@ -51,8 +49,8 @@ public class MainActivity extends FragmentActivity
 	
 	//TODO can probably consolidate the two arrays once we have a way to switch between the two modes
 	//array to store the locations from the periodic updates
-	private ArrayList<Location> walkingPoints = new ArrayList<Location>();
-	private ArrayList<LatLng> plottingPoints = new ArrayList<LatLng>();
+	private ArrayList<Location> walkingPoints;
+	private ArrayList<LatLng> plottingPoints;
 	
 	// Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -136,13 +134,15 @@ public class MainActivity extends FragmentActivity
     	    @Override
     	    public void onClick(View v) 
     	    {
-    			if(firstClick != null && lastClick != null)
+    	    	LatLng firstPoint = plottingPoints.get(0);
+    	    	LatLng lastPoint = plottingPoints.get(plottingPoints.size()-1);
+    			if(firstPoint != null && lastPoint != null)
     			{
     				PolylineOptions line = new PolylineOptions().add(
-    						firstClick,
-    						lastClick);
+    						firstPoint,
+    						lastPoint);
     				mMap.addPolyline(line);
-    				Toast.makeText(v.getContext(), String.valueOf(Utilities.findDistance(firstClick, lastClick)), Toast.LENGTH_SHORT).show();
+    				Toast.makeText(v.getContext(), String.valueOf(Utilities.findDistance(firstPoint, lastPoint)), Toast.LENGTH_SHORT).show();
         			setModeToIdle();
     			}
        			else
@@ -176,17 +176,43 @@ public class MainActivity extends FragmentActivity
         	allowAutomaticUpdates = savedInstanceState.getBoolean("allow_automatic_updates");
         	walkingPoints = savedInstanceState.getParcelableArrayList("user_points");
         	
-        	//populate the map using previous points
-        	if(walkingPoints != null)
+        	if(isWalking)
         	{
-            	for(int i = 0; i < walkingPoints.size()-2; i++)
-            	{
-    	    		PolylineOptions line = new PolylineOptions().add(
-    						Utilities.toLatLng(walkingPoints.get(i)),
-    						Utilities.toLatLng(walkingPoints.get(i+1))
-    						);
-    	    		mMap.addPolyline(line);
-            	}
+        		
+	        	//populate the map using previous points
+	        	if(walkingPoints != null)
+	        	{
+	            	for(int i = 0; i < walkingPoints.size()-2; i++)
+	            	{
+	    	    		PolylineOptions line = new PolylineOptions().add(
+	    						Utilities.toLatLng(walkingPoints.get(i)),
+	    						Utilities.toLatLng(walkingPoints.get(i+1))
+	    						);
+	    	    		mMap.addPolyline(line);
+	            	}
+	        	}
+	        	else
+	        	{
+	        		walkingPoints = new ArrayList<Location>();
+	        	}
+        	}
+        	else
+        	{
+        		if(plottingPoints != null)
+        		{
+            		for(int i = 0; i < walkingPoints.size()-2; i++)
+                	{
+        	    		PolylineOptions line = new PolylineOptions().add(
+        						Utilities.toLatLng(walkingPoints.get(i)),
+        						Utilities.toLatLng(walkingPoints.get(i+1))
+        						);
+        	    		mMap.addPolyline(line);
+                	}
+        		}
+        		else
+        		{
+        			plottingPoints = new ArrayList<LatLng>();
+        		}
         	}
         }
     }
@@ -211,7 +237,6 @@ public class MainActivity extends FragmentActivity
         super.onPause();
     }
     
-    //TODO: Finish this implementation
     @Override
     protected void onSaveInstanceState(Bundle outState)
     {
@@ -276,21 +301,15 @@ public class MainActivity extends FragmentActivity
     		PolylineOptions line = new PolylineOptions().add(position, lastPosition);
     		mMap.addPolyline(line);
 		}
-		plottingPoints.add(position);
-		
-		
-		
-		
-		if(firstClick == null)
-		{
-			firstClick = position;
-		}
 		else
 		{
-			lastClick = position;
-		}		
-		mMap.addMarker(new MarkerOptions().position(position)
-				  );
+			plottingPoints = new ArrayList<LatLng>();
+		}
+		
+		plottingPoints.add(position);
+		
+		//TODO figure out best way to remove previous marker
+		mMap.addMarker(new MarkerOptions().position(position));
 	}
 
 //	@Override
@@ -362,7 +381,6 @@ public class MainActivity extends FragmentActivity
         }
     }
     
-    // Define the callback method that receives location updates
     @Override
     public void onLocationChanged(Location location) {
         // Report to the UI that the location is not certain -- debugging only
@@ -374,18 +392,23 @@ public class MainActivity extends FragmentActivity
     	
     	else
     	{
-    		//if this is the first point that is collected
-	    	if(currentLocation != null)
+    		//if this is not the first point that is collected
+	    	if(walkingPoints != null)
 	    	{
-	    		PolylineOptions line = new PolylineOptions().add(
-						Utilities.toLatLng(location),
-						Utilities.toLatLng(currentLocation));
-	    		mMap.addPolyline(line);
+	    		if(walkingPoints.size() != 0)
+	    		{
+		    		PolylineOptions line = new PolylineOptions().add(
+							Utilities.toLatLng(location),
+							Utilities.toLatLng(walkingPoints.get(walkingPoints.size()-1)));
+		    		mMap.addPolyline(line);
+	    		}
 	    	}
-	    	
-			currentLocation = location;
-			
-			walkingPoints.add(currentLocation);
+	    	else
+	    	{
+	    		walkingPoints = new ArrayList<Location>();
+	    	}
+	    				
+			walkingPoints.add(location);
 			
 	        String msg = "Updated Location: " +
 	                Double.toString(location.getLatitude()) + ","  +
@@ -393,6 +416,7 @@ public class MainActivity extends FragmentActivity
 	//        mLatLng.setText(msg);
 	        
 	        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+//	        Toast.makeText(this, getCurrentLocation().toString(), Toast.LENGTH_SHORT).show();
     	}
     }
     

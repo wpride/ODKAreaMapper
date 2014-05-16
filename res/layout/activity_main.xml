@@ -66,6 +66,7 @@
 		    android:layout_height="100dp"
 		    android:text="Start walk"
 		    android:layout_alignParentTop="true"
+		    android:layout_alignParentRight="true"
 	 		/>
 	    
 	 	<Button
