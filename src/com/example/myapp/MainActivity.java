@@ -1,6 +1,7 @@
 package com.example.myapp;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import android.content.IntentSender;
 import android.location.Location;
@@ -48,8 +49,10 @@ public class MainActivity extends FragmentActivity
 	private boolean isWalking = false;
 	private boolean allowAutomaticUpdates = true;
 	
+	//TODO can probably consolidate the two arrays once we have a way to switch between the two modes
 	//array to store the locations from the periodic updates
-	private ArrayList<Location> userPoints;
+	private ArrayList<Location> walkingPoints = new ArrayList<Location>();
+	private ArrayList<LatLng> plottingPoints = new ArrayList<LatLng>();
 	
 	// Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -171,16 +174,16 @@ public class MainActivity extends FragmentActivity
         {
         	isWalking = savedInstanceState.getBoolean("is_walking");
         	allowAutomaticUpdates = savedInstanceState.getBoolean("allow_automatic_updates");
-        	userPoints = savedInstanceState.getParcelableArrayList("user_points");
+        	walkingPoints = savedInstanceState.getParcelableArrayList("user_points");
         	
         	//populate the map using previous points
-        	if(userPoints != null)
+        	if(walkingPoints != null)
         	{
-            	for(int i = 0; i < userPoints.size()-2; i++)
+            	for(int i = 0; i < walkingPoints.size()-2; i++)
             	{
     	    		PolylineOptions line = new PolylineOptions().add(
-    						Utilities.toLatLng(userPoints.get(i)),
-    						Utilities.toLatLng(userPoints.get(i+1))
+    						Utilities.toLatLng(walkingPoints.get(i)),
+    						Utilities.toLatLng(walkingPoints.get(i+1))
     						);
     	    		mMap.addPolyline(line);
             	}
@@ -215,7 +218,7 @@ public class MainActivity extends FragmentActivity
         super.onSaveInstanceState(outState);
         outState.putBoolean("is_walking", isWalking);
         outState.putBoolean("allow_automatic_updates", allowAutomaticUpdates);
-        outState.putParcelableArrayList("user_points", userPoints);
+        outState.putParcelableArrayList("user_points", walkingPoints);
     }
     
     @Override
@@ -267,6 +270,17 @@ public class MainActivity extends FragmentActivity
 	@Override
 	public void onMapClick(LatLng position)
 	{
+		if(plottingPoints != null)
+		{
+			LatLng lastPosition = plottingPoints.get(plottingPoints.size()-1);
+    		PolylineOptions line = new PolylineOptions().add(position, lastPosition);
+    		mMap.addPolyline(line);
+		}
+		plottingPoints.add(position);
+		
+		
+		
+		
 		if(firstClick == null)
 		{
 			firstClick = position;
@@ -368,14 +382,10 @@ public class MainActivity extends FragmentActivity
 						Utilities.toLatLng(currentLocation));
 	    		mMap.addPolyline(line);
 	    	}
-	    	else
-	    	{
-	    		//if no point has been collected, then userPoints wouldn't have been initialized yet, so initialize it!
-	    		userPoints = new ArrayList<Location>();
-	    	}
+	    	
 			currentLocation = location;
 			
-			userPoints.add(currentLocation);
+			walkingPoints.add(currentLocation);
 			
 	        String msg = "Updated Location: " +
 	                Double.toString(location.getLatitude()) + ","  +
@@ -401,7 +411,8 @@ public class MainActivity extends FragmentActivity
     }
     
     
-	private boolean servicesConnected() {
+	private boolean servicesConnected() 
+	{
         // Check that Google Play services is available
 		int errorCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
 		if (errorCode != ConnectionResult.SUCCESS) 
@@ -411,20 +422,4 @@ public class MainActivity extends FragmentActivity
 		}
 		return true;
     }
-	
-	
-
-	
-	/**
-	 * calculates the distance between two Locations using the haversine formula
-	 */
-	public double findDistance(Location firstPoint, Location secondPoint)
-	{
-		final double radiusOfEarth = 6378;
-		double firstLatitude = firstPoint.getLatitude();
-		double firstLongitude = firstPoint.getLongitude();
-		double secondLatitude = secondPoint.getLatitude();
-		double secondLongitude = secondPoint.getLongitude();
-		return Utilities.haversine(firstLatitude, firstLongitude, secondLatitude, secondLongitude, radiusOfEarth);
-	} 
 }
