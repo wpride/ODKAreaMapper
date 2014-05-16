@@ -2,7 +2,6 @@ package com.example.myapp;
 
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.FragmentManager;
 import android.os.Bundle;
 
 // Define a DialogFragment that displays the error dialog

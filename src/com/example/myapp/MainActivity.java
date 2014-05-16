@@ -1,9 +1,8 @@
 package com.example.myapp;
 
-//import com.example.mapdemo.R;
-import android.content.Context;
+import java.util.ArrayList;
+
 import android.content.IntentSender;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -34,15 +33,25 @@ public class MainActivity extends FragmentActivity
 	//main activity that runs the app
 	
 	private GoogleMap mMap;
+	
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 	private LatLng firstClick;
 	private LatLng lastClick;
 	private LocationClient mLocationClient;
-	private Location mCurrentLocation; 
+	private Location currentLocation; 
 	private LocationRequest mLocationRequest;
-	private boolean mUpdatesRequested;
 	
-	 // Milliseconds per second
+	
+	private TextView locationText;
+	
+	//default states for the two booleans
+	private boolean isWalking = false;
+	private boolean allowAutomaticUpdates = true;
+	
+	//array to store the locations from the periodic updates
+	private ArrayList<Location> userPoints;
+	
+	// Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
     // Update frequency in seconds
     public static final int UPDATE_INTERVAL_IN_SECONDS = 5;
@@ -54,12 +63,49 @@ public class MainActivity extends FragmentActivity
     // A fast frequency ceiling in milliseconds
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
-	
-    private SharedPreferences mPrefs;
-    private SharedPreferences.Editor mEditor;
-    
-    private TextView mLatLng;
+	    
+	public enum UiState {idle, walking, plotting};
+	public UiState uiState = UiState.idle;
 
+
+    /**
+     * determines what UI elements need to be present based on what state we're in
+     */
+	public void refreshView()
+	{
+		switch(uiState)
+		{
+			case idle:
+				this.setModeToIdle();
+				break;
+			case walking:
+				this.setModeToWalking();
+				break;
+			case plotting:
+				this.setModeToPlotting();
+		}
+	}
+	
+	//TODO implement this UI mode
+	private void setModeToIdle()
+	{
+		isWalking = false;
+		//UI stuff goes here
+	}
+	
+	//TODO implement this UI mode
+	private void setModeToWalking()
+	{
+		isWalking = true;
+		//UI stuff goes here
+	}
+	
+	//TODO implement this UI mode
+	private void setModeToPlotting()
+	{
+		isWalking = false;
+		//UI stuff goes here
+	}
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -67,16 +113,23 @@ public class MainActivity extends FragmentActivity
 		
 		setContentView(R.layout.activity_main);
 		
-        mLatLng = (TextView) findViewById(R.id.label_lat_lng);
 
 		
         // Try to obtain the map from the SupportMapFragment.
         mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                 .getMap();
-        mMap.setOnMapClickListener(this);
-        
-    	Button doneButton = (Button) findViewById(R.id.submit_button);
-    	doneButton.setOnClickListener(new View.OnClickListener() {
+        mMap.setOnMapClickListener(this); 
+
+//		  TODO center map around user's location (not working currently)
+//        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(getCurrentLocation().getLatitude(), getCurrentLocation().getLongitude()),
+//                10), 2000, null);
+        mMap.setBuildingsEnabled(false);
+        mMap.setMyLocationEnabled(true);
+                
+        locationText = (TextView) findViewById(R.id.LocationText);
+    	Button doneButton = (Button) findViewById(R.id.connect_points_button);
+    	doneButton.setOnClickListener(new View.OnClickListener() 
+    	{
     	    @Override
     	    public void onClick(View v) 
     	    {
@@ -87,30 +140,24 @@ public class MainActivity extends FragmentActivity
     						lastClick);
     				mMap.addPolyline(line);
     				Toast.makeText(v.getContext(), String.valueOf(findDistance(firstClick, lastClick)), Toast.LENGTH_SHORT).show();
+        			setModeToIdle();
     			}
-    			else
+       			else
     			{
     				Toast.makeText(v.getContext(), "you need more points!", Toast.LENGTH_SHORT).show();
     			}    	    
     		}
     	});
     	
-    	Button getLocationButton = (Button) findViewById(R.id.get_location_button);
-    	getLocationButton.setOnClickListener(new View.OnClickListener() 
+    	Button startWalkButton = (Button) findViewById(R.id.start_walk_button);
+    	startWalkButton.setOnClickListener(new View.OnClickListener() 
     	{
-    	    @Override
-    	    public void onClick(View v) 
-    	    {
-    	        // If Google Play Services is available
-    	        if (servicesConnected()) 
-    	        {
-    	            // Get the current location
-    	            mCurrentLocation = mLocationClient.getLastLocation();
-    	            mLatLng.setText(mCurrentLocation.toString());
-        	    	Toast.makeText(v.getContext(), mCurrentLocation.toString(), Toast.LENGTH_SHORT).show();
-    	        }
-    	    }
-    	});
+			@Override
+			public void onClick(View v) 
+			{
+				setModeToWalking();
+			}
+		});
    	
     	mLocationRequest = LocationRequest.create();
     	
@@ -120,45 +167,72 @@ public class MainActivity extends FragmentActivity
     	
         mLocationClient = new LocationClient(this, this, this);
         
-        mPrefs = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE);
-        mEditor = mPrefs.edit();
-
-        mUpdatesRequested = true;
-	}
+        if(savedInstanceState != null) 
+        {
+        	isWalking = savedInstanceState.getBoolean("is_walking");
+        	allowAutomaticUpdates = savedInstanceState.getBoolean("allow_automatic_updates");
+        	userPoints = savedInstanceState.getParcelableArrayList("user_points");
+        	
+        	//populate the map using previous points
+        	if(userPoints != null)
+        	{
+            	for(int i = 0; i < userPoints.size()-2; i++)
+            	{
+    	    		PolylineOptions line = new PolylineOptions().add(
+    						toLatLng(userPoints.get(i)),
+    						toLatLng(userPoints.get(i+1))
+    						);
+    	    		mMap.addPolyline(line);
+            	}
+        	}
+        }
+    }
 
     /*
      * Called when the Activity becomes visible.
      */
     @Override
-    protected void onStart() {
+    protected void onStart() 
+    {
         super.onStart();
         // Connect the client.
         mLocationClient.connect();
     }
 
     @Override
-    protected void onPause() {
-        // Save the current setting for updates
-        mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
-        mEditor.commit();
+    protected void onPause() 
+    {
+//        // Save the current setting for updates
+//        mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
+//        mEditor.commit();
         super.onPause();
     }
     
+    //TODO: Finish this implementation
     @Override
-    protected void onResume() {
-        /*
-         * Get any previous setting for location updates
-         * Gets "false" if an error occurs
-         */
-        if (mPrefs.contains("KEY_UPDATES_ON")) {
-            mUpdatesRequested =
-                    mPrefs.getBoolean("KEY_UPDATES_ON", false);
-
-        // Otherwise, turn off location updates
-        } else {
-            mEditor.putBoolean("KEY_UPDATES_ON", false);
-            mEditor.commit();
-        }
+    protected void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("is_walking", isWalking);
+        outState.putBoolean("allow_automatic_updates", allowAutomaticUpdates);
+        outState.putParcelableArrayList("user_points", userPoints);
+    }
+    
+    @Override
+    protected void onResume() 
+    {
+//        /*
+//         * Get any previous setting for location updates
+//         * Gets "false" if an error occurs
+//         */
+//
+//        
+//        // Otherwise, turn off location updates
+//        else 
+//        {
+//            mEditor.putBoolean("KEY_UPDATES_ON", false);
+//            mEditor.commit();
+//        }
         super.onResume();
     }
     
@@ -215,14 +289,15 @@ public class MainActivity extends FragmentActivity
     public void onConnected(Bundle dataBundle) {
         // Display the connection status
         Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
-        if (mUpdatesRequested) {
+        if (allowAutomaticUpdates) 
+        {
             startPeriodicUpdates();
         }
     }
         
     private void startPeriodicUpdates()
     {
-    	mLocationClient.requestLocationUpdates(mLocationRequest, this);
+    	mLocationClient.requestLocationUpdates(mLocationRequest, this);    	
     }
 
     /*
@@ -234,6 +309,7 @@ public class MainActivity extends FragmentActivity
         // Display the connection status
         Toast.makeText(this, "Disconnected. Please re-connect.",
                 Toast.LENGTH_SHORT).show();
+        
     }
 
     /*
@@ -273,15 +349,61 @@ public class MainActivity extends FragmentActivity
     }
     
     // Define the callback method that receives location updates
-    //TODO WHY ISN'T THIS WORKING
     @Override
     public void onLocationChanged(Location location) {
-        // Report to the UI that the location was updated
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-//        mLatLng.setText(msg);
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        // Report to the UI that the location is not certain -- debugging only
+    	//TODO Tune this value, Remove this debugging check
+    	if(location.getAccuracy() > 10000.0)
+    	{
+    		locationText.setText(String.valueOf(location.getAccuracy()));
+    	}
+    	
+    	else
+    	{
+    		//if this is the first point that is collected
+	    	if(currentLocation != null)
+	    	{
+	    		PolylineOptions line = new PolylineOptions().add(
+						toLatLng(location),
+						toLatLng(currentLocation));
+	    		mMap.addPolyline(line);
+	    	}
+	    	else
+	    	{
+	    		//if no point has been collected, then userPoints wouldn't have been initialized yet, so initialize it!
+	    		userPoints = new ArrayList<Location>();
+	    	}
+			currentLocation = location;
+			
+			userPoints.add(currentLocation);
+			
+	        String msg = "Updated Location: " +
+	                Double.toString(location.getLatitude()) + ","  +
+	                Double.toString(location.getLongitude());
+	//        mLatLng.setText(msg);
+	        
+	        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    	}
+    }
+    
+    /**
+     * converts Location in to LatLng out
+     */
+    public LatLng toLatLng(Location location)
+    {
+    	return new LatLng(location.getLatitude(), location.getLongitude());
+    }
+    
+    /**
+     * gets current location if the service is available
+	*/
+    public Location getCurrentLocation()
+    {
+    	if(servicesConnected())
+    	{
+            return mLocationClient.getLastLocation();
+    	}
+    	return null;
     }
     
     
@@ -298,34 +420,64 @@ public class MainActivity extends FragmentActivity
 	
 	
 	/**
-	 * calculates the distance between two points using the haversine formula
+	 * calculates the distance between two LatLng points using the haversine formula
 	 */
 	private double findDistance(LatLng firstPoint, LatLng secondPoint)
 	{
 		final double radiusOfEarth = 6378;
-		double latitudeDistance = inRadians(firstPoint.latitude - secondPoint.latitude);
-		double longitudeDistance = inRadians(firstPoint.longitude - secondPoint.longitude);
-		double a = Math.pow((Math.sin(latitudeDistance / 2)) , 2) 
-				+ Math.cos(inRadians(firstPoint.latitude)) * Math.cos(inRadians(secondPoint.latitude))
-				  * Math.pow((Math.sin(longitudeDistance / 2)) , 2);
-		return 2 * radiusOfEarth * Math.atan2(Math.pow(a, 0.5), Math.pow(1 - a, 0.5));
+		double firstLatitude = firstPoint.latitude;
+		double firstLongitude = firstPoint.longitude;
+		double secondLatitude = secondPoint.latitude;
+		double secondLongitude = secondPoint.longitude;
+		
+		return haversine(firstLatitude, firstLongitude, secondLatitude, secondLongitude, radiusOfEarth);
 	}
 	
+	/**
+	 * calculates the distance between two Locations using the haversine formula
+	 */
+	public double findDistance(Location firstPoint, Location secondPoint)
+	{
+		final double radiusOfEarth = 6378;
+		double firstLatitude = firstPoint.getLatitude();
+		double firstLongitude = firstPoint.getLongitude();
+		double secondLatitude = secondPoint.getLatitude();
+		double secondLongitude = secondPoint.getLongitude();
+		return haversine(firstLatitude, firstLongitude, secondLatitude, secondLongitude, radiusOfEarth);
+	} 
+	
+	/**
+	 * Uses the haversine formula to determine what the spherical distance between two points are
+	 * @param firstLat
+	 * @param firstLong
+	 * @param secondLat
+	 * @param secondLong
+	 * @param r
+	 * @return spherical distance in kilometres
+	 */
+	public double haversine(double firstLat, double firstLong, double secondLat, double secondLong, double r)
+	{
+		double latitudeDistance = inRadians(firstLat - secondLat);
+		double longitudeDistance = inRadians(firstLong - secondLong);
+		double a = Math.pow((Math.sin(latitudeDistance / 2)) , 2) 
+				+ Math.cos(inRadians(firstLat)) * Math.cos(inRadians(secondLat))
+				  * Math.pow((Math.sin(longitudeDistance / 2)) , 2);
+		return 2 * r * Math.atan2(Math.pow(a, 0.5), Math.pow(1 - a, 0.5));
+	}
+	
+	/**
+	 * converts degrees to radians
+	 */
 	private double inRadians(Double degree)
 	{
 		return degree * Math.PI / 180.0;
 	}
 
-
-//	public void doCalculations()
-//	{
-//		
-//	}
-
-public void findArea()
-{
-	//http://forum.worldwindcentral.com/showthread.php?20724-A-method-to-compute-the-area-of-a-spherical-polygon
-}
+	//TODO finish this implementation
+	public void findArea()
+	{
+		//http://forum.worldwindcentral.com/showthread.php?20724-A-method-to-compute-the-area-of-a-spherical-polygon
+	}
 
 
 }

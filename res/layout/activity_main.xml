@@ -19,45 +19,72 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp" >
+	>
     
-<RelativeLayout
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
-     	<fragment
-  		android:id="@+id/map"
-  		android:layout_width="fill_parent"
-  		android:layout_height="fill_parent"
-  		class="com.google.android.gms.maps.SupportMapFragment"/>
-</RelativeLayout>
- 	<RelativeLayout
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
-    <TextView
-        android:id="@+id/label_lat_lng"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:text="LatLng"
-        android:textSize="20sp" />
-    
- 	<Button
- 	    android:id="@+id/submit_button"
-	    android:layout_width="100dp"
-	    android:layout_height="50dp"
-	    android:text="@string/done_button_text"
- 	    />
- 	
- 	    <Button
-        android:id="@+id/get_location_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/submit_button"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        android:text="Get Location" />
- 	</RelativeLayout>
+	<RelativeLayout
+	    android:id="@+id/mapLayout"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content">
+	    
+	     	<fragment
+	  		android:id="@+id/map"
+	  		android:layout_width="fill_parent"
+	  		android:layout_height="fill_parent"
+	  		class="com.google.android.gms.maps.SupportMapFragment"
+	  		/>
+	     	
+	</RelativeLayout>
+	
+	<RelativeLayout
+	   	android:id="@+id/otherItemsLayout"
+	  	android:layout_width="fill_parent"
+	  	android:layout_height="wrap_content"
+	  	>
+	     	
+	    <TextView
+	        android:id="@+id/InstructionsText"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentLeft="true"
+	        android:layout_alignParentTop="true"
+	        android:text="Click map to define your area or press start walk to walk around its perimeter"
+	        android:textSize="20sp" 
+	        />
+	    
+	    <TextView
+	        android:id="@+id/LocationText"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentBottom="true"
+	        android:text=" "
+	        android:textSize="20sp" 
+	        />
+	
+	   	<Button
+	 	    android:id="@+id/start_walk_button"
+		    android:layout_width="100dp"
+		    android:layout_height="100dp"
+		    android:text="Start walk"
+		    android:layout_alignParentTop="true"
+	 		/>
+	    
+	 	<Button
+	 	    android:id="@+id/connect_points_button"
+		    android:layout_width="100dp"
+		    android:layout_height="50dp"
+		    android:text="@string/connect_points_button_text"
+	 		/>
+	 	
+<!-- 	 	<Button
+	        android:id="@+id/get_location_button"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/connect_points_button"
+	        android:layout_centerHorizontal="true"
+	        android:layout_marginTop="10dp"
+	        android:text="Get Location" 
+	        /> -->
+	 	
+	 </RelativeLayout>
 
 </RelativeLayout>
