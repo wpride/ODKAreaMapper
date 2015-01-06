@@ -1,4 +1,4 @@
-package com.example.myapp;
+package org.commcare.areamap;
 
 import android.location.Location;
 

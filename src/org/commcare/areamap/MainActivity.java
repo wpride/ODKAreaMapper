@@ -1,4 +1,4 @@
-package com.example.myapp;
+package org.commcare.areamap;
 
 import java.util.ArrayList;
 
@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myapp.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -311,12 +312,6 @@ public class MainActivity extends FragmentActivity
 		//TODO figure out best way to remove previous marker
 		mMap.addMarker(new MarkerOptions().position(position));
 	}
-
-//	@Override
-//	public void onClick(View v) 
-//	{
-
-//	}
 	
     @Override
     public void onConnected(Bundle dataBundle) {
